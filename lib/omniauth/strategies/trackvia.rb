@@ -32,7 +32,7 @@ module OmniAuth
       end
 
       def user_id
-        raw_info['id']
+        @user_id ||= access_token.params['oauth_id']
       end
 
       def raw_info
