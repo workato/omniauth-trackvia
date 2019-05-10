@@ -3,6 +3,19 @@ require 'spec_helper'
 RSpec.describe OmniAuth::Strategies::Trackvia do
   let(:request) { double('Request', params: {}, cookies: {}, env: {}) }
   let(:profile) { raw_info_hash['profiles'].first }
+  let(:token_object) { OpenStruct.new(params: token_params) }
+  let(:token_params) do
+    { "value" => "TOKEN_VALUE",
+      "tokenType" => "bearer",
+      "refreshToken" => {
+        "value" => "REFRESH_TOKEN",
+        "expiration" => "2090-01-01T00:00:00.000+0000" },
+      "expiresIn" => 299,
+      "expiration" => "2019-05-01T04:42:09.949+0000",
+      "apiVersion" => "18.5",
+      "oauth_id" => "valid_oauth_id",
+      "accessToken" => "ACCESS_TOKEN" }
+  end
   let(:raw_info_hash) do
     {
       "id": 10000,
@@ -67,7 +80,7 @@ RSpec.describe OmniAuth::Strategies::Trackvia do
   end
 
   it "has a version number" do
-    expect(OmniAuth::Trackvia::VERSION).to eq '0.1.0'
+    expect(OmniAuth::Trackvia::VERSION).to eq '0.1.1'
   end
 
   describe 'client_options' do
@@ -91,6 +104,7 @@ RSpec.describe OmniAuth::Strategies::Trackvia do
   describe 'info' do
     before do
       allow(subject).to receive(:raw_info).and_return(raw_info_hash)
+      allow(subject).to receive(:access_token).and_return(token_object)
     end
 
     it 'contains strict list of attrs' do
@@ -98,7 +112,7 @@ RSpec.describe OmniAuth::Strategies::Trackvia do
     end
 
     it 'returns the uid' do
-      expect(subject.info[:uid]).to eq(raw_info_hash['id'])
+      expect(subject.info[:uid]).to eq(token_params['oauth_id'])
     end
 
     it 'returns the name' do
@@ -107,6 +121,12 @@ RSpec.describe OmniAuth::Strategies::Trackvia do
 
     it 'returns the email' do
       expect(subject.info[:email]).to eq(raw_info_hash['email'])
+    end
+
+    describe 'uid' do
+      it 'returns the uid' do
+        expect(subject.uid).to eq(token_params['oauth_id'])
+      end
     end
   end
 
